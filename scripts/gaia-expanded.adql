@@ -1,0 +1,15 @@
+SELECT TOP {limit}
+    g.source_id, g.ra, g.dec, g.parallax, g.parallax_error,
+    g.phot_g_mean_mag, g.bp_rp, g.ruwe, g.b,
+    g.phot_bp_rp_excess_factor,
+    g.phot_bp_mean_flux_over_error, g.phot_rp_mean_flux_over_error
+FROM gaiadr3.gaia_source AS g
+WHERE g.parallax >= 0.5
+    AND g.parallax_over_error > 10
+    AND g.ruwe < 1.4
+    AND g.visibility_periods_used > 8
+    AND g.phot_g_mean_flux_over_error > 50
+    AND g.phot_bp_mean_flux_over_error > 10
+    AND g.phot_rp_mean_flux_over_error > 10
+    AND g.bp_rp BETWEEN -1 AND 6
+    AND ({selection})

@@ -1,0 +1,88 @@
+{
+  "omega-pm-all.tsv": {
+    "url": "https://vizier.cfa.harvard.edu/viz-bin/asu-tsv?-source=J/ApJ/710/1032/pm_stars&-out=F,XREF,YREF,Bmag,Rmag,Q&-out.max=110000&F=c",
+    "sha256": "93231738e95f3a698173f8c2843a0bf3d3c02fe01a85bea730a8b92e70835c37"
+  },
+  "hst-psf-f435w.fits": {
+    "url": "https://www.stsci.edu/files/live/sites/www/files/home/hst/instrumentation/acs/data-analysis/psf/_documents/STDPSF_ACSWFC_F435W_SM3.fits",
+    "sha256": "d8dc7a9e5223f9018ce02b2a0de46fb906c5b86a36ffe0ad2915e1bd4d1cd50c"
+  },
+  "hst-psf-f625w.fits": {
+    "url": "https://www.stsci.edu/files/live/sites/www/files/home/hst/instrumentation/acs/data-analysis/psf/_documents/STDPSF_ACSWFC_F625W_SM3.fits",
+    "sha256": "06ede63fcbb8597ed20de593e087a7931f7ade5e4d373aed45889564a475e179"
+  },
+  "hyades-members.csv": {
+    "endpoint": "https://dc.g-vo.org/tap/sync",
+    "queryIn": "assets/hyades-catalog.json",
+    "sha256": "79873ed7ab7aa3a7e4338e91a29e05dd690b36aa40434485deca9ee77ce8228f"
+  },
+  "hyades-gaia.csv": {
+    "endpoint": "https://gea.esac.esa.int/tap-server/tap/sync",
+    "queryIn": "assets/hyades-catalog.json",
+    "sha256": "dfb92baad166c8d4cab77690cc370b4e21b52a6fc60d3d6028f123dfe19a19a5"
+  },
+  "gaia-expanded-local.csv": {
+    "endpoint": "https://gea.esac.esa.int/tap-server/tap/sync",
+    "queryIn": "assets/gaia-nearby-catalog.json",
+    "outputs": [
+      "assets/gaia-nearby-catalog.json"
+    ],
+    "component": "local",
+    "sha256": "f625afa6fcf7ebd25f3a1bb8e7a5ec73125385b4595cb5547f2f720fb498e935"
+  },
+  "gaia-expanded-bright.csv": {
+    "endpoint": "https://gea.esac.esa.int/tap-server/tap/sync",
+    "queryIn": "assets/gaia-nearby-catalog.json",
+    "outputs": [
+      "assets/gaia-nearby-catalog.json",
+      "assets/gaia-distant-catalog.json"
+    ],
+    "component": "bright",
+    "sha256": "b3df5b732b4ee821e36bad090a2079389c041e31348e352265dc500141bf3e21"
+  },
+  "gaia-expanded-distant-field.csv": {
+    "endpoint": "https://gea.esac.esa.int/tap-server/tap/sync",
+    "queryIn": "assets/gaia-distant-catalog.json",
+    "outputs": [
+      "assets/gaia-distant-catalog.json"
+    ],
+    "component": "distant-field",
+    "sha256": "a65152a43653524f3701753389f123c219dd6c91981afa1dea46ae47b9596ee8"
+  },
+  "gaia-expanded-distant-white-dwarfs.csv": {
+    "endpoint": "https://gea.esac.esa.int/tap-server/tap/sync",
+    "queryIn": "assets/gaia-distant-catalog.json",
+    "outputs": [
+      "assets/gaia-distant-catalog.json"
+    ],
+    "component": "distant-white-dwarfs",
+    "sha256": "68ba51662108f363acff065dd1ef75328cfd481b2469f02a0b3ea9340dfd2b5e"
+  },
+  "gaia-expanded-distant-luminous.csv": {
+    "endpoint": "https://gea.esac.esa.int/tap-server/tap/sync",
+    "queryIn": "assets/gaia-distant-catalog.json",
+    "outputs": [
+      "assets/gaia-distant-catalog.json"
+    ],
+    "component": "distant-luminous",
+    "sha256": "0dd7b1d8975c36a82780af91a3c3e880cf8496da63f51b1ceaff2720b3555c19"
+  },
+  "gaia-bj-field.csv": {
+    "endpoint": "https://gea.esac.esa.int/tap-server/tap/async",
+    "queryIn": "assets/gaia-bailer-jones-catalog.json",
+    "component": "field",
+    "sha256": "667affba3d0d52ea43bc645910eea0201789a84a4d8a51979506428773098013"
+  },
+  "gaia-bj-bright.csv": {
+    "endpoint": "https://gea.esac.esa.int/tap-server/tap/async",
+    "queryIn": "assets/gaia-bailer-jones-catalog.json",
+    "component": "bright",
+    "sha256": "fab7ee03017736acf8ef1e5762c3c11fda7b82ea8b1d67cf8cee5fbdb393c96f"
+  },
+  "gaia-bj-white-dwarfs.csv": {
+    "endpoint": "https://gea.esac.esa.int/tap-server/tap/async",
+    "queryIn": "assets/gaia-bailer-jones-catalog.json",
+    "component": "white-dwarfs",
+    "sha256": "7956c084c3c687ae0fd56e6433e4ad059e48dcd4a11f1e0d6228851a934c6b8a"
+  }
+}

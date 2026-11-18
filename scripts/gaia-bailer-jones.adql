@@ -1,0 +1,25 @@
+SELECT TOP {limit}
+    g.source_id, g.ra, g.dec, g.parallax, g.parallax_error,
+    g.phot_g_mean_mag, g.bp_rp, g.ruwe, g.b,
+    g.phot_bp_rp_excess_factor,
+    g.phot_bp_mean_flux_over_error, g.phot_rp_mean_flux_over_error,
+    d.r_med_geo, d.r_lo_geo, d.r_hi_geo
+FROM (
+    SELECT source_id, ra, dec, parallax, parallax_error,
+        phot_g_mean_mag, bp_rp, ruwe, b, phot_bp_rp_excess_factor,
+        phot_bp_mean_flux_over_error, phot_rp_mean_flux_over_error
+    FROM gaiadr3.gaia_source
+    WHERE ruwe < 1.4
+        AND visibility_periods_used > 8
+        AND phot_g_mean_flux_over_error > 50
+        AND phot_bp_mean_flux_over_error > 10
+        AND phot_rp_mean_flux_over_error > 10
+        AND bp_rp BETWEEN -1 AND 6
+        AND ({selection})
+    OFFSET 0
+) AS g
+JOIN external.gaiaedr3_distance AS d ON g.source_id = d.source_id
+WHERE d.r_med_geo <= 5000
+    AND d.r_lo_geo > 0
+    AND (d.r_hi_geo - d.r_lo_geo) / (2 * d.r_med_geo) <= 0.2
+    {distance_selection}
