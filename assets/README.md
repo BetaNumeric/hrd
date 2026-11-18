@@ -31,6 +31,8 @@ The nearby sample has **9,413 main-sequence-region, 3,500 white-dwarf-region, 43
 
 Data credit: ESA/Gaia/DPAC, Gaia Collaboration et al. (2023), Gaia DR3. DPAC receives support from national institutions participating in the Gaia Multilateral Agreement.
 
+All three Gaia field views include the Sun as a selectable reference star at the origin. It sorts with the catalog stars using the published solar estimates BP−RP = 0.816 and absolute G = 4.67. The ring follows it in both layouts. [Solar twin study](https://doi.org/10.1093/mnras/stag1864).
+
 ## Extended Gaia / Bailer-Jones view: within 5,000 pc
 
 The new cumulative view uses Gaia DR3 positions and photometry, joined by exact source ID to the **geometric** distance catalog of [Bailer-Jones et al. (2021), AJ 161, 147](https://doi.org/10.3847/1538-3881/abd806). It includes the inner 2 kpc; it is not a shell. The boundary is a cut on the posterior median, so some stars' upper distance bounds extend past 5,000 pc. [Catalog documentation and license](https://dc.g-vo.org/tableinfo/gedr3dist.main).
@@ -61,7 +63,7 @@ M_G = G + 5 log10(parallax_mas) − 10
 
 This is distance-corrected G-band brightness, not bolometric solar luminosity. No extinction correction is applied. Star details show published luminosity and temperature when available, and “Not published” otherwise. Inconsistent luminosity intervals remain flagged independently of membership and plotting. Tint follows BP−RP; sprite brightness uses absolute G with a visual stretch.
 
-3D positions use the same inverse-parallax distance and Astropy Galactic transform as the Gaia distance samples. The display subtracts one common center (the mean XYZ of the displayed sample), with one common parsec scale on all axes. This is a rigid translation and uniform scaling: **all relative positions, pairwise distances, and orientations are preserved**. It is not a dynamical reconstruction. The published 20 pc membership cut uses the GCNS center; the display's sample center is not claimed to be the cluster's exact barycenter. “Cluster X/Y/Z” axes are offsets from this display center, aligned with the Galactic axes. The raw solar-barycentric coordinates remain in star details. Sorted depth retains the same cluster-relative Galactic Y coordinate. The Sun marker belongs to both Gaia spatial views.
+3D positions use the same inverse-parallax distance and Astropy Galactic transform as the Gaia distance samples. The display subtracts one common center (the mean XYZ of the displayed sample), with one common parsec scale on all axes. This is a rigid translation and uniform scaling: **all relative positions, pairwise distances, and orientations are preserved**. It is not a dynamical reconstruction. The published 20 pc membership cut uses the GCNS center; the display's sample center is not claimed to be the cluster's exact barycenter. “Cluster X/Y/Z” axes are offsets from this display center, aligned with the Galactic axes. The raw solar-barycentric coordinates remain in star details. Sorted depth retains the same cluster-relative Galactic Y coordinate.
 
 Membership-table credit: Gaia Collaboration / GCNS, Richard Smart (2023), licensed **[CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/)**. Changes: Hyades-only inner-region and astrometric selection, DR3 crossmatch, coordinate transformation, and display sampling described above. Astrometry/photometry credit: ESA/Gaia/DPAC. The source table also lists Coma Berenices candidates; they are not included here.
 
@@ -94,9 +96,15 @@ Zoom has **no fixed minimum or maximum**; only nonpositive or nonfinite numerica
 
 The original 4,200-star illustrative dataset remains only as an internal reference in the source. Its temperatures, luminosities, population labels, and positions are synthetic; it uses the same empirical profiles as the observed dataset.
 
+## Installing the app
+
+Open the diagram on its HTTPS site and use your browser’s **Install app** or **Add to Home Screen** option. The app opens in its own window and works offline after the first successful load. The star data, textures, and font are embedded in `index.html`.
+
+For a local installation test, serve the project folder with `python -m http.server --bind 127.0.0.1 8000` and open `http://127.0.0.1:8000/`. You can also open `index.html` directly for the portable browser version.
+
 ## Rebuilding
 
-The JSON assets are also embedded in `hrd.html` so it opens directly from disk, including offline. The running program needs no remote requests. The dataset menu offers the three Gaia distance samples and the Hyades cluster.
+The JSON assets are also embedded in `index.html`, so it opens directly from disk. The dataset menu offers the three Gaia distance samples and the Hyades cluster.
 
 Install NumPy and Astropy, then run:
 
