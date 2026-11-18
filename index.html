@@ -39,6 +39,13 @@
     }
     * { box-sizing: border-box; }
     html, body { width: 100%; height: 100%; overflow: hidden; overscroll-behavior: none; }
+    html, body, .drawer, .settings-body, .toolbar { touch-action: manipulation; }
+    html, body, body *, body *::before, body *::after {
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
+      -webkit-tap-highlight-color: transparent;
+    }
     body { margin: 0; background: var(--background); color: var(--text); font: 1rem/1.4 var(--sans); }
     button, input, select { font: inherit; }
     button { cursor: pointer; }
@@ -376,7 +383,7 @@ SOFTWARE.
           <p class="mouse-help">Drag to orbit · Shift-drag to pan · Scroll to zoom</p>
           <p class="mouse-help">Double left-click to cycle side views · Double right-click for Top</p>
           <p class="mouse-help">Enter to sort · 1–6 to change view</p>
-          <p class="touch-help">Drag to orbit · Pinch to zoom or pan · Double-tap for Top</p>
+          <p class="touch-help">Drag to orbit · Pinch to zoom or pan · Double-tap for Front</p>
         </div>
       </details>
       <div class="star-section">
@@ -452,6 +459,41 @@ SOFTWARE.
     });
 
     const canvas = byId("sky");
+    const preventNativeInteraction = (event) => event.preventDefault();
+    for (const type of ["selectstart", "contextmenu", "dragstart", "dblclick"]) {
+      document.addEventListener(type, preventNativeInteraction);
+    }
+    // Some iOS versions can double-tap zoom despite touch-action: manipulation.
+    // Cancel only a second tap on panel text, leaving scroll and controls native.
+    for (const panel of document.querySelectorAll(".drawer")) {
+      let touchStart = null, previousTap = null;
+      const distance = (a, b) => Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+      panel.addEventListener("touchstart", (event) => {
+        const control = event.target.closest("a, button, input, label, select, summary");
+        touchStart = event.touches.length === 1 && !control
+          ? { touch: event.changedTouches[0], time: event.timeStamp }
+          : null;
+        if (!touchStart) previousTap = null;
+      }, { passive: true });
+      panel.addEventListener("touchend", (event) => {
+        const start = touchStart;
+        touchStart = null;
+        const touch = event.changedTouches[0];
+        if (!start || event.touches.length || touch.identifier !== start.touch.identifier
+            || event.timeStamp - start.time > 300 || distance(touch, start.touch) > 12) {
+          previousTap = null;
+          return;
+        }
+        if (previousTap && start.time - previousTap.time < 400 && distance(touch, previousTap.touch) < 28) {
+          event.preventDefault();
+        }
+        previousTap = { touch, time: event.timeStamp };
+      }, { passive: false });
+      panel.addEventListener("touchcancel", () => { touchStart = previousTap = null; });
+    }
+    // The canvas handles its own gestures. Cancel native touch actions here
+    // to suppress the iOS loupe while leaving panel scrolling and taps alone.
+    canvas.addEventListener("touchstart", preventNativeInteraction, { passive: false });
     const ctx = canvas.getContext("2d");
 
     if (ctx) {
@@ -743,7 +785,8 @@ SOFTWARE.
       let lastRightClick = null;
       let lastTouchDoubleTap = -Infinity;
       let lastFrameTime = null;
-      let lastTap = null;
+      let pendingTap = null;
+      const doubleTapDelay = 500;
       let frameId = null;
       let activeGroup = null;
       let pinned = null;
@@ -842,6 +885,7 @@ SOFTWARE.
 
       function setCameraView(view, { preserveFraming = false, duration = 450 } = {}) {
         if (!Object.hasOwn(cameraViews, view)) return;
+        cancelPendingTap();
         doubleClickView = null;
         const target = cameraViews[view];
         const azimuthDelta = Math.atan2(Math.sin(target.azimuth - camera.azimuth), Math.cos(target.azimuth - camera.azimuth));
@@ -1132,6 +1176,7 @@ SOFTWARE.
       }
 
       function setPinned(star) {
+        cancelPendingTap();
         pinned = star;
         byId("star-empty").hidden = Boolean(star);
         byId("star-details").hidden = !star;
@@ -1226,6 +1271,7 @@ SOFTWARE.
       }
 
       function setSorted(value) {
+        cancelPendingTap();
         sorted = value;
         const target = Number(sorted);
         if (layoutBlend === target || reducedMotion.matches) {
@@ -1764,8 +1810,19 @@ SOFTWARE.
         return { x: (first.x + second.x) / 2, y: (first.y + second.y) / 2 };
       }
 
+      function cancelPendingTap() {
+        if (!pendingTap) return;
+        clearTimeout(pendingTap.timer);
+        pendingTap = null;
+      }
+
+      document.addEventListener("pointerdown", (event) => {
+        if (event.target !== canvas) cancelPendingTap();
+      });
+
       canvas.addEventListener("pointerdown", (event) => {
         if (event.button === 2) {
+          cancelPendingTap();
           rightPress = { ...pointerPosition(event), time: performance.now(), id: event.pointerId };
           return;
         }
@@ -1777,11 +1834,16 @@ SOFTWARE.
         canvas.focus({ preventScroll: true });
         canvas.setPointerCapture(event.pointerId);
         pointers.set(event.pointerId, point);
-        if (pointers.size === 1) gesture = { start: point, startDirection: cameraBasis().normal, started: performance.now(), moved: false, panning: event.shiftKey };
+        if (pointers.size === 1) {
+          const now = performance.now();
+          const followsTap = event.pointerType === "touch" && pendingTap && now - pendingTap.time < doubleTapDelay
+            && Math.hypot(point.x - pendingTap.x, point.y - pendingTap.y) < 28;
+          cancelPendingTap();
+          gesture = { start: point, startDirection: cameraBasis().normal, started: now, followsTap, moved: false, panning: event.shiftKey };
+        }
         if (pointers.size === 2) {
           gesture.moved = true;
           gesture.pinching = true;
-          lastTap = null;
           gesture.distance = Math.max(1, pointerDistance());
           gesture.zoom = camera.zoom;
           gesture.center = pointerCenter();
@@ -1808,7 +1870,6 @@ SOFTWARE.
         if (!gesture.moved) {
           if (Math.hypot(point.x - gesture.start.x, point.y - gesture.start.y) < 4) return;
           gesture.moved = true;
-          lastTap = null;
         }
         if (gesture.panning) {
           panCamera(point.x - previous.x, point.y - previous.y);
@@ -1823,31 +1884,36 @@ SOFTWARE.
         if (!gesture.moved && event.type === "pointerup") {
           const point = pointerPosition(event);
           const now = performance.now();
-          if (event.pointerType === "touch" && lastTap && now - lastTap.time < 500 && Math.hypot(point.x - lastTap.x, point.y - lastTap.y) < 28) {
-            lastTap = null;
-            gesture = null;
-            lastTouchDoubleTap = now;
-            setCameraView("top");
-            return;
+          if (event.pointerType === "touch") {
+            const shortTap = now - gesture.started < 300 && Math.hypot(point.x - gesture.start.x, point.y - gesture.start.y) < 12;
+            if (shortTap && gesture.followsTap) {
+              lastTouchDoubleTap = now;
+              setCameraView("front");
+            } else if (shortTap) {
+              // Give a second tap time to arrive before opening the Info panel.
+              const star = nearestStar(point.x, point.y, 14);
+              const timer = setTimeout(() => {
+                pendingTap = null;
+                if (star) setPinned(star === pinned ? null : star);
+              }, doubleTapDelay);
+              pendingTap = { ...point, time: now, timer };
+            }
+          } else {
+            const star = nearestStar(point.x, point.y, 9);
+            if (star) setPinned(star === pinned ? null : star);
           }
-          lastTap = event.pointerType === "touch" && now - gesture.started < 300 ? { ...point, time: now } : null;
-          const star = nearestStar(point.x, point.y, event.pointerType === "touch" ? 14 : 9);
-          if (star) setPinned(star === pinned ? null : star);
         }
         if (gesture.moved && !gesture.pinching && !gesture.panning && event.type === "pointerup") finishOrbit(gesture.startDirection);
-        if (event.type !== "pointerup") lastTap = null;
+        if (event.type !== "pointerup") cancelPendingTap();
         gesture = null;
       }
 
       for (const event of ["pointerup", "pointercancel", "lostpointercapture"]) canvas.addEventListener(event, endPointer);
       canvas.addEventListener("pointerleave", () => canvas.classList.remove("pointing"));
       canvas.addEventListener("dblclick", (event) => {
-        if (event.button !== 0) return;
-        event.preventDefault();
-        if (performance.now() - lastTouchDoubleTap < 700) return;
+        if (event.button !== 0 || event.sourceCapabilities?.firesTouchEvents || performance.now() - lastTouchDoubleTap < 700) return;
         cycleDoubleClickView();
       });
-      canvas.addEventListener("contextmenu", (event) => event.preventDefault());
       canvas.addEventListener("pointerup", (event) => {
         if (event.button !== 2) return;
         const point = pointerPosition(event), now = performance.now();
